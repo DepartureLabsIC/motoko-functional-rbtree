@@ -186,6 +186,54 @@ module {
         };
     };
 
+    public type TakeFilter<X, Y> = ((X, Y)) -> Bool;
+
+    public func takeWithFilter<X, Y>(compareTo : (X) -> O.Order, filter : TakeFilter<X, Y>, dir : TakeDirection, t0 : Tree<X, Y>) : TakeResult<X, Y> {
+        var out = List.nil<(X, Y)>();
+        var steps = 0;
+
+        func pushMaybe(key : X, value : Y) {
+            if (filter((key, value))) {
+                out := List.push((key, value), out);
+            };
+        };
+
+        func traverse(t : Tree<X, Y>, compareTo : (X) -> O.Order) {
+            steps += 1;
+            switch(t) {
+                case (#leaf)   {};
+                case (#node(c, left, (key, valueMaybe), right)) {
+                    switch(compareTo(key), valueMaybe, dir) {
+                        case(#equal, ?hasValue, #asc) {
+                            traverse(right, compareTo);
+                            pushMaybe(key, hasValue);
+                            traverse(left, compareTo);
+                        };
+                        case(#equal, ?hasValue, #dsc) {
+                            traverse(left, compareTo);
+                            pushMaybe(key, hasValue);
+                            traverse(right, compareTo);
+                        };
+                        // Case where we have a key, but no associated value.
+                        case(#equal, null, _) {}; 
+                        case (#greater, _, _) {
+                            traverse(left, compareTo);
+                        };
+                        case (#less, _, _) {
+                            traverse(right, compareTo);
+                        };
+                    };
+                }
+            };
+        };
+
+        traverse(t0, compareTo);
+        return {
+            result = out;
+            steps  = steps;
+        };
+    };
+
     public func height<X, Y>(t : Tree<X, Y>) : Nat {
         switch t {
             case (#leaf) { 0 };
