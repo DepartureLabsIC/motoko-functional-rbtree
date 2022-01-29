@@ -99,6 +99,25 @@ module {
                     });
 
                     assertAllTrue(List.toArray(result));
+                }),
+                it("should apply a filter", do {
+                    var tree = getFilledTree(0, 10);
+
+                    let filter : RBTree.TakeFilter<Nat, Nat> = func((k, v)) {
+                        return Nat.rem(k, 2) == 0;
+                    };
+
+                    let range = RBTree.takeWithFilter<Nat, Nat>(buildFilter(0, 10), filter, #asc, tree).result;
+
+                    var c = 0;
+                    // expect 0, 2, 4, 6, 8, 10
+                    let result = List.map<(Nat, Nat), Bool>(range, func(x) {
+                        let out = c == x.0;
+                        c +=2;
+                        return out;
+                    });
+
+                    assertAllTrue(List.toArray(result));
                 })
             ]);
     };
