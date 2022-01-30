@@ -233,6 +233,56 @@ module {
             steps  = steps;
         };
     };
+    
+    public type TakeMap<X, Y, Z> = ((X, Y)) -> ?Z;
+    public func takeMap<X, Y, Z>(compareTo : (X) -> O.Order, map : TakeMap<X, Y, Z>, dir : TakeDirection, t0 : Tree<X, Y>) : TakeResult<X, Z> {
+        var out = List.nil<(X, Z)>();
+        var steps = 0;
+
+        func pushMaybe(key : X, value : Y) {
+            switch(map((key, value))) {
+                case null{};
+                case (?v){
+                    out := List.push((key, v), out);
+                };
+            };
+        };
+
+        func traverse(t : Tree<X, Y>, compareTo : (X) -> O.Order) {
+            steps += 1;
+            switch(t) {
+                case (#leaf)   {};
+                case (#node(c, left, (key, valueMaybe), right)) {
+                    switch(compareTo(key), valueMaybe, dir) {
+                        case(#equal, ?hasValue, #asc) {
+                            traverse(right, compareTo);
+                            pushMaybe(key, hasValue);
+                            traverse(left, compareTo);
+                        };
+                        case(#equal, ?hasValue, #dsc) {
+                            traverse(left, compareTo);
+                            pushMaybe(key, hasValue);
+                            traverse(right, compareTo);
+                        };
+                        // Case where we have a key, but no associated value.
+                        case(#equal, null, _) {}; 
+                        case (#greater, _, _) {
+                            traverse(left, compareTo);
+                        };
+                        case (#less, _, _) {
+                            traverse(right, compareTo);
+                        };
+                    };
+                }
+            };
+        };
+
+        traverse(t0, compareTo);
+        return {
+            result = out;
+            steps  = steps;
+        };
+    };
 
     public func height<X, Y>(t : Tree<X, Y>) : Nat {
         switch t {

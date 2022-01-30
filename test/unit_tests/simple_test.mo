@@ -118,6 +118,28 @@ module {
                     });
 
                     assertAllTrue(List.toArray(result));
+                }),
+                it("should apply a mapfilter", do {
+                    var tree = getFilledTree(0, 10);
+
+                    let filter : RBTree.TakeMap<Nat, Nat, {v : Nat}> = func((k, v)) {
+                        if (Nat.rem(k, 2) == 0) {
+                            return ?{v = k};
+                        };
+                        return null;
+                    };
+
+                    let range = RBTree.takeMap<Nat, Nat, {v : Nat}>(buildFilter(0, 10), filter, #asc, tree).result;
+
+                    var c = 0;
+                    // expect 0, 2, 4, 6, 8, 10
+                    let result = List.map<(Nat, {v : Nat}), Bool>(range, func(x) {
+                        let out = c == x.1.v;
+                        c +=2;
+                        return out;
+                    });
+
+                    assertAllTrue(List.toArray(result));
                 })
             ]);
     };
